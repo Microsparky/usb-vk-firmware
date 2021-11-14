@@ -1,0 +1,20 @@
+# Generated binary
+bin/
+*.elf
+*.bin
+generated.*.ld
+
+# Exclude the System View Description
+*.svd
+
+# Exclude unnecesary .json
+.vscode/*
+!launch.json
+!tasks.json
+!extentions.json
+
+# Exclude reference material
+Reference/
+
+# Exclude VSCode workspace
+.code-workspace

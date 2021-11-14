@@ -1,0 +1,93 @@
+/*
+type:               To utilize the Cortex-Debug extension your launch type should be set to "cortex-debug"
+
+request:            This is the debug request type. This can have one of the two following values:
+    launch - In this mode at debug start the firmware executable will automatically be flashed to the target microcontroller and the microcontroller will be restarted.
+    attach - In this mode the target microcontroller will be halted - but the core is not reset and firmware is not flashed. It is up to the user to ensure that the elf firmware file corresponds to the current version of the firmware flashed on the microcontroller.
+
+servertype:         This is the type of GDB server to use for the debug process. The following servertype values are supported:
+    jlink - This uses the JLinkGDBServer (JLinkGDBServerCL.exe on Windows) executable. If this is not located on your system PATH the path to the executable can be set in the "cortex-debug.JLinkGDBServerPath" user/workspace setting. All Cortex-Debug features are supported when using the J-Link mode.
+    openocd - This mode uses the OpenOCD server. If the openocd executable is not located on your system PATH then the complete path to the openocd executable can be set in the "cortex-debug.openocdPath" user/workspace setting. All Cortex-Debug features are support when using the OpenOCD mode.
+    stutil - This mode uses the st-util gdb server from texane/stlink (https://github.com/texane/stlink). If the st-util executable is not located on your system PATH then the complete path to the executable can be set in the "cortex-debug.stutilPath". In this mode SWO data cannot be collected via your debug probe (collecting SWO data via a separate serial port is supported).
+    pyocd - This mode uses the MBed pyOCD GDB server (https://github.com/mbedmicro/pyOCD). If the pyocd-gdbserver executable is not located on your system PATH then the complete path to the executable can be set in the "cortex-debug.pyocdPath" user/workspace setting. In this mode SWO data cannot be collected via your debug probe (collecting SWO data via a separate serial port is supported).
+    bmp - This mode uses the Black Magic Probe with its built-in GDB server. In this mode SWO data cannot currently be collected via your debug probe (support for this is under development; you can currently collect SWO data via a separate serial port).
+
+executable:         This is the path to the firmware executable to debug (ELF format); symbols will be loaded from this executable, and in launch
+
+cwd:                This should contain a path to be used for the current working directory when debugging - this will default to the workspace root
+
+device:             This configuration parameter is the name of the device being targeted for debug. When using the J-Link GDB server this parameter is required (See https://www.segger.com/downloads/supported-devices.php for devices - only Cortex-M devices are supported by Cortex-Debug). When using other GDB servers this parameter is optional, but may be used to help automatically determine the SVD file to use if it is not manually supplied.
+
+svdFile:            You can specify a specific SVD file that defines the peripherals of the device being debugged - this is used to build the peripheral registers view. For some members of the STM32 family the SVD file will be automatically determined based upon the device parameter if supplied and svdFile is omitted.
+
+swoConfig:          This configuration section controls the SWO/ITM decoding support present in Cortex-Debug. This is discussed in more depth on the Cortex-Debug SWO Decoding and Graphing page.
+
+graphConfig:        This configuration section controls the Graphing of SWO/ITM decoded data. This is discussed in more depth on the Cortex-Debug SWO Decoding and Graphing page.
+
+showDevDebugOutput: This will output additional output in the debugging stream for debugging the Cortex-Debug extension. It is generally not needed in normal operation, but can be useful to enable if you want to make a bug report for Cortex-Debug.
+
+////////////////////////////
+pyOCD GDB Server ("servertype": "pyocd")
+To the right is an example configuration for the pyOCD GDB Server.
+
+In this configuration the device paramter is not required - but can be supplied to allow auto-selecting an appropriate SVD file if possible.
+
+There are two pyocd specific configuration parameters, that are needed for two different situations, but in most cases can be omitted:
+
+boardId - If you have multiple pyOCD compatible boards connected at the same time you need to specify the board to use using this parameter. You can get a list of all available board ids by executing pyocd-gdbserver -l in a terminal window.
+targetId (string value) - If you are using a pyOCD powered probe to debug custom hardware (not an on-board target) then you need to specify a supported target. You can find a list of supported targets by executing pyocd-gdbserver --help in a terminal window.
+
+////////////////////////////
+https://web.archive.org/web/20180903235853/https://marcelball.ca/projects/cortex-debug/cortex-debug-launch-configurations/
+
+////////////////////////////
+Black Magic Probe
+{
+    "name": "BMP attach",
+    "cwd": "${workspaceRoot}",
+    "executable": "${workspaceRoot}/build/binaryToDebug.elf",
+    "request": "attach",
+    "type": "cortex-debug",
+    "servertype": "bmp",
+    "interface": "swd",
+    "device": "STM32F407",
+    "BMPGDBSerialPort" : "espressif:2345",
+    "runToMain": true,
+    "preLaunchCommands":[
+        "set async-remote false",
+        "set remote-timeout 20"
+    ],
+    "preRestartCommands": [
+        "enable breakpoint",
+        "break main"
+    ]
+}
+
+////////////////////////////
+https://github.com/Marus/cortex-debug/wiki/Black-Magic-Probe-Specific-Configuration
+*/
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (GDB)",
+    
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "bmp",
+            "executable": "./src/custom-blink.elf",
+            "cwd": "${workspaceRoot}",
+            "interface": "swd",
+            "device": "STM32F401RC",
+            "BMPGDBSerialPort" : "COM9",
+            "preLaunchTask": "Make",    // Run the tasks.json "Make" task
+            "postLaunchCommands": [     // substitute Windows E:/ path for WSL /mnt/e references
+                "set substitute-path /mnt/e E:/"   
+            ],
+            "runToMain": true,
+            "v1": false,
+            "svdFile": "./src/STM32F401.svd",
+            //"postDebugTask": "QuitPyOCD"   // Stop the PyOCD GDB server (persists due to --persist flag)
+        }
+    ]
+}
